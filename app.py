@@ -126,6 +126,7 @@ elif beam_type == "Doubly - Double Layer Tension & Compression":
 
 # Display Results
 st.subheader("Results")
+st.write(f"**Compression block depth (a):** {round(a, 2)} in")
 st.write(f"**Neutral Axis Depth (c):** {round(c, 2)} in")
 st.write(f"**Nominal Moment (Mn):** {round(Mn, 2)} kip-ft")
 st.write(f"**Net Tensile Strain (εt):** {round(epsilon_t, 5)}")
