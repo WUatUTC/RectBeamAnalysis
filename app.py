@@ -106,7 +106,7 @@ fy = st.sidebar.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
 
 if beam_type == "Singly - Single Layer":
     As = st.sidebar.number_input("Tension Reinforcement, As (in²)", value=1.5)
-    Mn, epsilon_t,c, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
+    Mn, epsilon_t, c, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
 
 elif beam_type == "Singly - Two Layers":
     As = st.sidebar.number_input("Total Tension Reinforcement, As (in²)", value=3.0)
