@@ -33,7 +33,7 @@ def singly_reinforced_single_layer(b, h, fc, fy, As):
     epsilon_t = 0.003 * (d - c) / c  # Net tensile strain
     Mn = As * fy * (d - a / 2)  # Nominal moment in kip-in
     phi = strength_reduction_factor(epsilon_t)
-    return Mn / 12, epsilon_t, phi, (Mn / 12) * phi  # Convert to kip-ft
+    return Mn / 12, epsilon_t, c, phi, (Mn / 12) * phi  # Convert to kip-ft
 
 # Singly Reinforced Beam - Two Layers
 def singly_reinforced_two_layers(b, h, fc, fy, As):
@@ -44,7 +44,7 @@ def singly_reinforced_two_layers(b, h, fc, fy, As):
     epsilon_t = 0.003 * (d_t - c) / c
     Mn = As * fy * (d_t - a / 2)
     phi = strength_reduction_factor(epsilon_t)
-    return Mn / 12, epsilon_t, phi, (Mn / 12) * phi
+    return Mn / 12, epsilon_t, c, phi, (Mn / 12) * phi
 
 # Iterative approach for doubly reinforced beams
 def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
@@ -106,11 +106,11 @@ fy = st.sidebar.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
 
 if beam_type == "Singly Reinforced - Single Layer":
     As = st.sidebar.number_input("Tension Reinforcement, As (in²)", value=1.5)
-    Mn, epsilon_t, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
+    Mn, epsilon_t,c, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
 
 elif beam_type == "Singly Reinforced - Two Layers":
     As = st.sidebar.number_input("Total Tension Reinforcement, As (in²)", value=3.0)
-    Mn, epsilon_t, phi, Mn_red = singly_reinforced_two_layers(b, h, fc, fy, As)
+    Mn, epsilon_t, c, phi, Mn_red = singly_reinforced_two_layers(b, h, fc, fy, As)
 
 elif beam_type == "Doubly Reinforced - Single Layer Tension & Compression":
     As_t = st.sidebar.number_input("Tension Reinforcement, As_t (in²)", value=3.0)
