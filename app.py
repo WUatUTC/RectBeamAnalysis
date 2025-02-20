@@ -104,11 +104,11 @@ h = st.sidebar.number_input("Beam Depth, h (in)", value=24.0)
 fc = st.sidebar.number_input("Concrete Strength, f'c (psi)", value=4000.0) / 1000  # Convert psi to ksi
 fy = st.sidebar.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
 
-if beam_type == "Singly - Single Layer":
+if beam_type == "Singly - Single Layer Tension":
     As = st.sidebar.number_input("Tension Reinforcement, As (in²)", value=1.5)
     Mn, epsilon_t, c, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
 
-elif beam_type == "Singly - Two Layers":
+elif beam_type == "Singly - Double Layer Tension":
     As = st.sidebar.number_input("Total Tension Reinforcement, As (in²)", value=3.0)
     Mn, epsilon_t, c, phi, Mn_red = singly_reinforced_two_layers(b, h, fc, fy, As)
 
