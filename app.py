@@ -135,12 +135,6 @@ st.write(f"**Reduced Nominal Moment (φMn):** {round(Mn_red, 2)} kip-ft")
 # Visualization: Force and Strain Diagram
 fig, ax = plt.subplots(1, 2, figsize=(12, 5))
 
-# Force Distribution
-ax[0].bar(["Concrete (Cc)", "Comp. Steel (Cs)", "Tension Steel (T)"], [Cc, Cs, T], color=['blue', 'red', 'green'])
-ax[0].set_title("Force Distribution")
-ax[0].set_ylabel("Force (lbs)")
-ax[0].grid(axis='y', linestyle='--')
-
 # Strain Diagram
 depths = [0, c, h]  # Positions (top, neutral axis, bottom)
 strains = [0, 0.003, epsilon_t]  # Corresponding strains
