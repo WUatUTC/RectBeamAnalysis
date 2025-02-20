@@ -33,7 +33,7 @@ def singly_reinforced_single_layer(b, h, fc, fy, As):
     epsilon_t = 0.003 * (d - c) / c  # Net tensile strain
     Mn = As * fy * (d - a / 2)  # Nominal moment in kip-in
     phi = strength_reduction_factor(epsilon_t)
-    return Mn / 12, epsilon_t, c, phi, (Mn / 12) * phi  # Convert to kip-ft
+    return Mn / 12, epsilon_t, c, a, phi, (Mn / 12) * phi  # Convert to kip-ft
 
 # Singly Reinforced Beam - Two Layers
 def singly_reinforced_two_layers(b, h, fc, fy, As):
@@ -44,7 +44,7 @@ def singly_reinforced_two_layers(b, h, fc, fy, As):
     epsilon_t = 0.003 * (d_t - c) / c
     Mn = As * fy * (d_t - a / 2)
     phi = strength_reduction_factor(epsilon_t)
-    return Mn / 12, epsilon_t, c, phi, (Mn / 12) * phi
+    return Mn / 12, epsilon_t, c, a, phi, (Mn / 12) * phi
 
 # Iterative approach for doubly reinforced beams
 def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
@@ -86,7 +86,7 @@ def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
     # Compute strength reduction factor
     phi = strength_reduction_factor(epsilon_t)
 
-    return Mn / 12, epsilon_t, phi, (Mn / 12) * phi, c, Cc, Cs, T  # Convert to kip-ft
+    return Mn / 12, epsilon_t, phi, (Mn / 12) * phi, c, a, Cc, Cs, T  # Convert to kip-ft
 
 # Streamlit UI
 st.title("Reinforced Concrete Beam Moment Calculator")
