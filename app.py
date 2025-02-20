@@ -80,7 +80,7 @@ def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime,layers):
 
     # Compute nominal moment
     # Mn = As_t * fy * (d - a / 2) + As_c * fs_c * (d - d_prime)
-      Mn = Cc * (d - a / 2) + Cs * (d - d_prime)
+    Mn = Cc * (d - a / 2) + Cs * (d - d_prime)
 
     # Compute strength reduction factor
     phi = strength_reduction_factor(epsilon_t)
