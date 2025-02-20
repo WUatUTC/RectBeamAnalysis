@@ -1,100 +1,122 @@
+# This app is for education purpose to compute reduced nominal moment for different rectangular beam section
 import streamlit as st
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Singly Reinforced (Single Tension Layer)
-def calculate_single_layer(b, d, fc, fy, As):
-    a = (As * fy) / (0.85 * fc * b)
-    Mn = As * fy * (d - a / 2)  # Moment in kip-in
-    return Mn / 12  # Convert to kip-ft
+# Constants
+Es = 29000  # ksi (Steel Modulus of Elasticity)
 
-# Singly Reinforced (Two Layers of Tension Steel)
-def calculate_two_layers(b, d1, d2, fc, fy, As1, As2):
-    a1 = (As1 * fy) / (0.85 * fc * b)
-    a2 = (As2 * fy) / (0.85 * fc * b)
-    Mn1 = As1 * fy * (d1 - a1 / 2)
-    Mn2 = As2 * fy * (d2 - a2 / 2)
-    return (Mn1 + Mn2) / 12  # Convert to kip-ft
+# Compute beta_1 based on f'c (psi)
+def compute_beta1(fc):
+    if fc <= 4000:
+        return 0.85
+    elif fc > 8000:
+        return 0.65
+    else:
+        return 0.85 - 0.05 * (fc - 4000) / 1000
 
-# Doubly Reinforced (Single Layer Tension & Compression)
-def calculate_doubly_reinforced_single_layer(b, d, fc, fy, As_t, As_c, d_prime):
-    net_tension = As_t * fy - As_c * fy
-    a = net_tension / (0.85 * fc * b)
-    Mn = As_t * fy * (d - a / 2) + As_c * fy * (d - d_prime)
-    return Mn / 12  # Convert to kip-ft
+# Compute strength reduction factor based on net tensile strain
+def strength_reduction_factor(epsilon_t):
+    if epsilon_t >= 0.005:
+        return 0.9
+    elif epsilon_t <= 0.002:
+        return 0.65
+    else:
+        return 0.65 + (epsilon_t - 0.002) * (0.9 - 0.65) / (0.005 - 0.002)
 
-# Doubly Reinforced (Double Tension Layers, Single Compression Layer)
-def calculate_doubly_reinforced_double_tension_single_compression(b, fc, fy, 
-                                                                 As_t1, As_t2, d1, d2,
-                                                                 As_c, d_prime):
-    total_net_tension = (As_t1 + As_t2) * fy - As_c * fy
-    a = total_net_tension / (0.85 * fc * b)
-    Mn_tension = As_t1 * fy * (d1 - a / 2) + As_t2 * fy * (d2 - a / 2)
-    Mn_compression = As_c * fy * (d2 - d_prime)
-    return (Mn_tension + Mn_compression) / 12  # Convert to kip-ft
+# Iterative approach for doubly reinforced beams
+def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
+    d_t = h - 2.5  # Effective depth for extreme tension steel layer
+    beta1 = compute_beta1(fc)
+    
+    # Initial guess for neutral axis depth
+    c = d_t / 4
+    tolerance = 0.001  # Convergence threshold
+    max_iterations = 100
+    iteration = 0
+
+    while iteration < max_iterations:
+        a = beta1 * c  # Compression block depth
+        Cc = 0.85 * fc * b * a  # Concrete compressive force
+
+        # Compute compression steel stress
+        epsilon_s = 0.003 * (c - d_prime) / c
+        fs_c = min(fy, Es * epsilon_s)  # Ensure compression steel does not exceed fy
+        Cs = As_c * (fs_c - 0.85 * fc)  # Compression steel force
+
+        # Compute net tension force
+        T = As_t * fy
+
+        # Force balance check
+        if abs(T - (Cc + Cs)) < tolerance:
+            break  # Converged
+        else:
+            c = c * (T / (Cc + Cs))  # Adjust trial c
+
+        iteration += 1
+
+    # Compute net tensile strain
+    epsilon_t = 0.003 * (d_t - c) / c
+
+    # Compute nominal moment
+    Mn = As_t * fy * (d_t - a / 2) + As_c * fs_c * (d_t - d_prime)
+
+    # Compute strength reduction factor
+    phi = strength_reduction_factor(epsilon_t)
+
+    return Mn / 12, epsilon_t, phi, (Mn / 12) * phi, c, Cc, Cs, T  # Convert to kip-ft
 
 # Streamlit UI
-st.title("Reduced Nominal Moment Calculator for Rectangular Concrete Beams (English Units)")
+st.title("Reinforced Concrete Beam Moment Calculator")
+st.sidebar.header("Beam Properties")
 
 beam_type = st.sidebar.selectbox("Select Beam Section Type", [
-    "Singly Reinforced - Single Tension Layer",
-    "Singly Reinforced - Two Layers (Equal Bars)",
-    "Singly Reinforced - Two Layers (Different Bars)",
-    "Doubly Reinforced - Single Tension & Compression",
-    "Doubly Reinforced - Double Tension, Single Compression"
+    "Doubly Reinforced - Single Layer Tension & Compression",
+    "Doubly Reinforced - Double Layer Tension & Compression"
 ])
 
-st.header("Enter Beam and Material Properties")
+b = st.sidebar.number_input("Beam Width, b (in)", value=12.0)
+h = st.sidebar.number_input("Beam Depth, h (in)", value=24.0)
+fc = st.sidebar.number_input("Concrete Strength, f'c (psi)", value=4000.0) / 1000  # Convert psi to ksi
+fy = st.sidebar.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
 
-# Common Inputs
-b = st.number_input("Beam Width, b (in)", value=12.0)
-h = st.number_input("Beam Depth, h (in)", value=24.0)
-fc = st.number_input("Concrete Compressive Strength, f'c (psi)", value=4000.0) / 1000  # Convert to ksi
-fy = st.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
+if beam_type == "Doubly Reinforced - Single Layer Tension & Compression":
+    As_t = st.sidebar.number_input("Tension Reinforcement, As_t (in²)", value=3.0)
+    As_c = st.sidebar.number_input("Compression Reinforcement, As_c (in²)", value=1.0)
+    d_prime = 2.5  # Single layer compression steel
+    Mn, epsilon_t, phi, Mn_red, c, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
 
-if beam_type == "Singly Reinforced - Single Tension Layer":
-    As = st.number_input("Tension Reinforcement Area, As (in²)", value=1.5)
-    d = h - 2.5  # Automatically computed
-    st.write(f"Effective Depth, d = {d} in")
-    Mn = calculate_single_layer(b, d, fc, fy, As)
-    st.write("Calculated Reduced Nominal Moment: ", round(Mn, 2), "kip-ft")
+elif beam_type == "Doubly Reinforced - Double Layer Tension & Compression":
+    As_t = st.sidebar.number_input("Total Tension Reinforcement, As_t (in²)", value=3.0)
+    As_c = st.sidebar.number_input("Total Compression Reinforcement, As_c (in²)", value=3.0)
+    d_prime = 3.5  # Double layer compression steel
+    Mn, epsilon_t, phi, Mn_red, c, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
 
-elif beam_type == "Singly Reinforced - Two Layers (Equal Bars)":
-    total_As = st.number_input("Total Tension Reinforcement Area, As (in²)", value=3.0)
-    d = h - 3.5  # Automatically computed
-    d1 = d - 1.0  # First layer depth
-    d2 = d  # Second layer depth
-    st.write(f"Effective Depths: d1 = {d1} in, d2 = {d2} in")
-    Mn = calculate_two_layers(b, d1, d2, fc, fy, total_As / 2, total_As / 2)
-    st.write("Calculated Reduced Nominal Moment: ", round(Mn, 2), "kip-ft")
+# Display Results
+st.subheader("Results")
+st.write(f"**Neutral Axis Depth (c):** {round(c, 2)} in")
+st.write(f"**Nominal Moment (Mn):** {round(Mn, 2)} kip-ft")
+st.write(f"**Net Tensile Strain (εt):** {round(epsilon_t, 5)}")
+st.write(f"**Strength Reduction Factor (φ):** {round(phi, 2)}")
+st.write(f"**Reduced Nominal Moment (φMn):** {round(Mn_red, 2)} kip-ft")
 
-elif beam_type == "Singly Reinforced - Two Layers (Different Bars)":
-    As1 = st.number_input("Tension Reinforcement Area for Layer 1, As1 (in²)", value=1.5)
-    As2 = st.number_input("Tension Reinforcement Area for Layer 2, As2 (in²)", value=1.5)
-    d = h - 3.5
-    d1 = d - 1.0
-    d2 = d
-    st.write(f"Effective Depths: d1 = {d1} in, d2 = {d2} in")
-    Mn = calculate_two_layers(b, d1, d2, fc, fy, As1, As2)
-    st.write("Calculated Reduced Nominal Moment: ", round(Mn, 2), "kip-ft")
+# Visualization: Force and Strain Diagram
+fig, ax = plt.subplots(1, 2, figsize=(12, 5))
 
-elif beam_type == "Doubly Reinforced - Single Tension & Compression":
-    As_t = st.number_input("Tension Reinforcement Area, As_t (in²)", value=3.0)
-    As_c = st.number_input("Compression Reinforcement Area, As_c (in²)", value=1.0)
-    d = h - 2.5
-    d_prime = st.number_input("Effective Depth for Compression Steel, d' (in)", value=2.0)
-    st.write(f"Effective Depth, d = {d} in")
-    Mn = calculate_doubly_reinforced_single_layer(b, d, fc, fy, As_t, As_c, d_prime)
-    st.write("Calculated Reduced Nominal Moment: ", round(Mn, 2), "kip-ft")
+# Force Distribution
+ax[0].bar(["Concrete (Cc)", "Comp. Steel (Cs)", "Tension Steel (T)"], [Cc, Cs, T], color=['blue', 'red', 'green'])
+ax[0].set_title("Force Distribution")
+ax[0].set_ylabel("Force (lbs)")
+ax[0].grid(axis='y', linestyle='--')
 
-elif beam_type == "Doubly Reinforced - Double Tension, Single Compression":
-    As_t1 = st.number_input("Tension Reinforcement Area for Layer 1, As_t1 (in²)", value=1.5)
-    As_t2 = st.number_input("Tension Reinforcement Area for Layer 2, As_t2 (in²)", value=1.5)
-    d = h - 3.5
-    d1 = d - 1.0
-    d2 = d
-    As_c = st.number_input("Compression Reinforcement Area, As_c (in²)", value=1.0)
-    d_prime = st.number_input("Effective Depth for Compression Steel, d' (in)", value=2.0)
-    st.write(f"Effective Depths: d1 = {d1} in, d2 = {d2} in")
-    Mn = calculate_doubly_reinforced_double_tension_single_compression(b, fc, fy,
-                                                                        As_t1, As_t2, d1, d2,
-                                                                        As_c, d_prime)
-    st.write("Calculated Reduced Nominal Moment: ", round(Mn, 2), "kip-ft")
+# Strain Diagram
+depths = [0, c, h]  # Positions (top, neutral axis, bottom)
+strains = [0, 0.003, epsilon_t]  # Corresponding strains
+ax[1].plot(strains, depths, marker='o', color='black', linestyle='-')
+ax[1].invert_yaxis()
+ax[1].set_xlabel("Strain")
+ax[1].set_ylabel("Beam Depth (in)")
+ax[1].set_title("Strain Distribution")
+ax[1].grid()
+
+st.pyplot(fig)
