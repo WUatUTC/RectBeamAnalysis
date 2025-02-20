@@ -26,7 +26,7 @@ def strength_reduction_factor(epsilon_t):
 
 # Select cover, # of layer can be 1 or 2
 def cover(layers):
-    if layers = 2:
+    if layers == 2:
         return 3.5
     else:
         return 2.5
