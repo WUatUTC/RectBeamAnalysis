@@ -89,7 +89,7 @@ def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime,layers):
 
 # Streamlit UI
 st.title("Reinforced Concrete Beam Moment Calculator")
-st.sidebar.header("Beam Properties")
+st.sidebar.header("User Input of Beam Properties")
 
 beam_type = st.sidebar.selectbox("Select Beam Section Type", [
     "Singly - Single Layer Tension",
