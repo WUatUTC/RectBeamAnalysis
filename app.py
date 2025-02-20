@@ -24,37 +24,33 @@ def strength_reduction_factor(epsilon_t):
     else:
         return 0.65 + (epsilon_t - 0.002) * (0.9 - 0.65) / (0.005 - 0.002)
 
-# Singly Reinforced Beam - Single Layer
-def singly_reinforced_single_layer(b, h, fc, fy, As):
-    d = h - 2.5  # Effective depth
+# Select cover, # of layer can be 1 or 2
+def cover(layers):
+    if layers = 2:
+        return 3.5
+    else:
+        return 2.5
+
+# Singly Reinforced Beam
+def singly_reinforced(b, h, fc, fy, As,layers):
+    d = h - cover(layers)  # Effective depth
+    d_t = h - 2.5
     beta1 = compute_beta1(fc)
     a = (As * fy) / (0.85 * fc * b)  # Compression block depth
     c = a / beta1  # Neutral axis depth
-    epsilon_t = 0.003 * (d - c) / c  # Net tensile strain
+    epsilon_t = 0.003 * (d_t - c) / c  # Net tensile strain
     Mn = As * fy * (d - a / 2)  # Nominal moment in kip-in
     phi = strength_reduction_factor(epsilon_t)
     return Mn / 12, epsilon_t, c, a, phi, (Mn / 12) * phi  # Convert to kip-ft
 
-# Singly Reinforced Beam - Two Layers
-def singly_reinforced_two_layers(b, h, fc, fy, As):
-    d_t = h - 2.5  # Approximate distance to extreme tension steel layer
-    d = h - 3.5  # Approximate distance to center of tension steel
-    beta1 = compute_beta1(fc)
-    a = (As * fy) / (0.85 * fc * b)
-    c = a / beta1
-    epsilon_t = 0.003 * (d_t - c) / c
-    Mn = As * fy * (d - a / 2)
-    phi = strength_reduction_factor(epsilon_t)
-    return Mn / 12, epsilon_t, c, a, phi, (Mn / 12) * phi
-
 # Iterative approach for doubly reinforced beams
-def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
+def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime,layers):
     d_t = h - 2.5  # Effective depth for extreme tension steel layer
-    
+    d = h - cover(layers) 
     beta1 = compute_beta1(fc)
     
     # Initial guess for neutral axis depth
-    c = d_t / 4
+    c = d / 4
     tolerance = 0.001  # Convergence threshold
     max_iterations = 100
     iteration = 0
@@ -109,29 +105,34 @@ fy = st.sidebar.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
 
 if beam_type == "Singly - Single Layer Tension":
     As = st.sidebar.number_input("Tension Reinforcement, As (in²)", value=1.5)
-    Mn, epsilon_t, c, a, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
+    layers = 1
+    Mn, epsilon_t, c, a, phi, Mn_red = singly_reinforced(b, h, fc, fy, As, layers)
 
 elif beam_type == "Singly - Double Layer Tension":
     As = st.sidebar.number_input("Total Tension Reinforcement, As (in²)", value=3.0)
-    Mn, epsilon_t, c, a, phi, Mn_red = singly_reinforced_two_layers(b, h, fc, fy, As)
+    layers = 2
+    Mn, epsilon_t, c, a, phi, Mn_red = singly_reinforced(b, h, fc, fy, As, layers)
 
 elif beam_type == "Doubly - Single Layer Tension & Compression":
     As_t = st.sidebar.number_input("Tension Reinforcement, As_t (in²)", value=3.0)
     As_c = st.sidebar.number_input("Compression Reinforcement, As_c (in²)", value=1.0)
     d_prime = 2.5  # Single layer compression steel
-    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
+    layers = 1
+    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime,layers)
 
 elif beam_type == "Doubly - Double Layer Tension & Single Layer Compression":
     As_t = st.sidebar.number_input("Total Tension Reinforcement, As_t (in²)", value=3.0)
     As_c = st.sidebar.number_input("Total Compression Reinforcement, As_c (in²)", value=3.0)
     d_prime = 2.5  # Single layer compression steel
-    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
+    layers = 2
+    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime,layers)
 
 elif beam_type == "Doubly - Double Layer Tension & Compression":
     As_t = st.sidebar.number_input("Total Tension Reinforcement, As_t (in²)", value=3.0)
     As_c = st.sidebar.number_input("Total Compression Reinforcement, As_c (in²)", value=3.0)
     d_prime = 3.5  # Double layer compression steel
-    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
+    layers = 2
+    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime,layers)
 
 # Display Results
 st.subheader("Results")
