@@ -38,11 +38,12 @@ def singly_reinforced_single_layer(b, h, fc, fy, As):
 # Singly Reinforced Beam - Two Layers
 def singly_reinforced_two_layers(b, h, fc, fy, As):
     d_t = h - 2.5  # Approximate distance to extreme tension steel layer
+    d = h - 3.5  # Approximate distance to center of tension steel
     beta1 = compute_beta1(fc)
     a = (As * fy) / (0.85 * fc * b)
     c = a / beta1
     epsilon_t = 0.003 * (d_t - c) / c
-    Mn = As * fy * (d_t - a / 2)
+    Mn = As * fy * (d - a / 2)
     phi = strength_reduction_factor(epsilon_t)
     return Mn / 12, epsilon_t, c, a, phi, (Mn / 12) * phi
 
@@ -81,7 +82,7 @@ def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
     epsilon_t = 0.003 * (d_t - c) / c
 
     # Compute nominal moment
-    Mn = As_t * fy * (d_t - a / 2) + As_c * fs_c * (d_t - d_prime)
+    Mn = As_t * fy * (d - a / 2) + As_c * fs_c * (d - d_prime)
 
     # Compute strength reduction factor
     phi = strength_reduction_factor(epsilon_t)
