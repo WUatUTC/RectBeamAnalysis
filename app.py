@@ -50,6 +50,7 @@ def singly_reinforced_two_layers(b, h, fc, fy, As):
 # Iterative approach for doubly reinforced beams
 def doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime):
     d_t = h - 2.5  # Effective depth for extreme tension steel layer
+    
     beta1 = compute_beta1(fc)
     
     # Initial guess for neutral axis depth
@@ -97,6 +98,7 @@ beam_type = st.sidebar.selectbox("Select Beam Section Type", [
     "Singly - Single Layer Tension",
     "Singly - Double Layer Tension",
     "Doubly - Single Layer Tension & Compression",
+    "Doubly - Double Layer Tension & Single Layer Compression",
     "Doubly - Double Layer Tension & Compression"
 ])
 
@@ -119,6 +121,12 @@ elif beam_type == "Doubly - Single Layer Tension & Compression":
     d_prime = 2.5  # Single layer compression steel
     Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
 
+elif beam_type == "Doubly - Double Layer Tension & Single Layer Compression":
+    As_t = st.sidebar.number_input("Total Tension Reinforcement, As_t (in²)", value=3.0)
+    As_c = st.sidebar.number_input("Total Compression Reinforcement, As_c (in²)", value=3.0)
+    d_prime = 2.5  # Single layer compression steel
+    Mn, epsilon_t, phi, Mn_red, c, a, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
+
 elif beam_type == "Doubly - Double Layer Tension & Compression":
     As_t = st.sidebar.number_input("Total Tension Reinforcement, As_t (in²)", value=3.0)
     As_c = st.sidebar.number_input("Total Compression Reinforcement, As_c (in²)", value=3.0)
@@ -133,18 +141,4 @@ st.write(f"**Nominal Moment (Mn):** {round(Mn, 2)} kip-ft")
 st.write(f"**Net Tensile Strain (εt):** {round(epsilon_t, 5)}")
 st.write(f"**Strength Reduction Factor (φ):** {round(phi, 2)}")
 st.write(f"**Reduced Nominal Moment (φMn):** {round(Mn_red, 2)} kip-ft")
-
-# Visualization: Force and Strain Diagram
-fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-
-# Strain Diagram
-depths = [0, c, h]  # Positions (top, neutral axis, bottom)
-strains = [0, 0.003, epsilon_t]  # Corresponding strains
-ax[1].plot(strains, depths, marker='o', color='black', linestyle='-')
-ax[1].invert_yaxis()
-ax[1].set_xlabel("Strain")
-ax[1].set_ylabel("Beam Depth (in)")
-ax[1].set_title("Strain Distribution")
-ax[1].grid()
-
 st.pyplot(fig)
