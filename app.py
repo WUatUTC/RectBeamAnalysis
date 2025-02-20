@@ -104,21 +104,21 @@ h = st.sidebar.number_input("Beam Depth, h (in)", value=24.0)
 fc = st.sidebar.number_input("Concrete Strength, f'c (psi)", value=4000.0) / 1000  # Convert psi to ksi
 fy = st.sidebar.number_input("Steel Yield Strength, f_y (ksi)", value=60.0)
 
-if beam_type == "Singly Reinforced - Single Layer":
+if beam_type == "Singly - Single Layer":
     As = st.sidebar.number_input("Tension Reinforcement, As (in²)", value=1.5)
     Mn, epsilon_t,c, phi, Mn_red = singly_reinforced_single_layer(b, h, fc, fy, As)
 
-elif beam_type == "Singly Reinforced - Two Layers":
+elif beam_type == "Singly - Two Layers":
     As = st.sidebar.number_input("Total Tension Reinforcement, As (in²)", value=3.0)
     Mn, epsilon_t, c, phi, Mn_red = singly_reinforced_two_layers(b, h, fc, fy, As)
 
-elif beam_type == "Doubly Reinforced - Single Layer Tension & Compression":
+elif beam_type == "Doubly - Single Layer Tension & Compression":
     As_t = st.sidebar.number_input("Tension Reinforcement, As_t (in²)", value=3.0)
     As_c = st.sidebar.number_input("Compression Reinforcement, As_c (in²)", value=1.0)
     d_prime = 2.5  # Single layer compression steel
     Mn, epsilon_t, phi, Mn_red, c, Cc, Cs, T = doubly_reinforced_beam(b, h, fc, fy, As_t, As_c, d_prime)
 
-elif beam_type == "Doubly Reinforced - Double Layer Tension & Compression":
+elif beam_type == "Doubly - Double Layer Tension & Compression":
     As_t = st.sidebar.number_input("Total Tension Reinforcement, As_t (in²)", value=3.0)
     As_c = st.sidebar.number_input("Total Compression Reinforcement, As_c (in²)", value=3.0)
     d_prime = 3.5  # Double layer compression steel
